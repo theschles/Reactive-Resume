@@ -1,4 +1,7 @@
 #!/bin/bash
+echo updating browsers list
+echo .
+npx update-browserslist-db@latest
 echo Pruning PNPM Store
 echo .
 pnpm store prune
