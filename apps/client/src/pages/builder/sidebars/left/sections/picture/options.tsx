@@ -1,13 +1,6 @@
 import { t } from "@lingui/macro";
-import {
-  AspectRatio,
-  Checkbox,
-  Input,
-  Label,
-  ToggleGroup,
-  ToggleGroupItem,
-  Tooltip,
-} from "@reactive-resume/ui";
+import type { AspectRatio } from "@reactive-resume/ui";
+import { Checkbox, Input, Label, ToggleGroup, ToggleGroupItem, Tooltip } from "@reactive-resume/ui";
 import { useMemo } from "react";
 
 import { useResumeStore } from "@/client/stores/resume";
@@ -61,8 +54,9 @@ export const PictureOptions = () => {
     return borderRadiusToStringMap[radius];
   }, [picture.borderRadius]);
 
-  const onBorderRadiusChange = (value: BorderRadius) => {
-    setValue("basics.picture.borderRadius", stringToBorderRadiusMap[value]);
+  const onBorderRadiusChange = (value: string) => {
+    if (!value) return;
+    setValue("basics.picture.borderRadius", stringToBorderRadiusMap[value as BorderRadius]);
   };
 
   return (

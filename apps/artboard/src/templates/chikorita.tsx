@@ -1,10 +1,8 @@
-import {
+import type {
   Award,
   Certification,
   CustomSection,
   CustomSectionGroup,
-  Education,
-  Experience,
   Interest,
   Language,
   Profile,
@@ -15,15 +13,16 @@ import {
   SectionWithItem,
   Skill,
   URL,
-  Volunteer,
 } from "@reactive-resume/schema";
-import { cn, isEmptyString, isUrl } from "@reactive-resume/utils";
+import { Education, Experience, Volunteer } from "@reactive-resume/schema";
+import { cn, isEmptyString, isUrl, sanitize } from "@reactive-resume/utils";
 import get from "lodash.get";
 import { Fragment } from "react";
 
+import { BrandIcon } from "../components/brand-icon";
 import { Picture } from "../components/picture";
 import { useArtboardStore } from "../store/artboard";
-import { TemplateProps } from "../types/template";
+import type { TemplateProps } from "../types/template";
 
 const Header = () => {
   const basics = useArtboardStore((state) => state.resume.basics);
@@ -90,9 +89,9 @@ const Summary = () => {
       <h4 className="mb-2 border-b pb-0.5 text-sm font-bold">{section.name}</h4>
 
       <div
-        dangerouslySetInnerHTML={{ __html: section.content }}
-        className="wysiwyg"
+        dangerouslySetInnerHTML={{ __html: sanitize(section.content) }}
         style={{ columns: section.columns }}
+        className="wysiwyg"
       />
     </section>
   );
@@ -127,7 +126,8 @@ const Link = ({ url, icon, iconOnRight, label, className }: LinkProps) => {
 
   return (
     <div className="flex items-center gap-x-1.5">
-      {!iconOnRight && (icon ?? <i className="ph ph-bold ph-link text-primary" />)}
+      {!iconOnRight &&
+        (icon ?? <i className="ph ph-bold ph-link text-primary group-[.sidebar]:text-white" />)}
       <a
         href={url.href}
         target="_blank"
@@ -136,7 +136,8 @@ const Link = ({ url, icon, iconOnRight, label, className }: LinkProps) => {
       >
         {label ?? (url.label || url.href)}
       </a>
-      {iconOnRight && (icon ?? <i className="ph ph-bold ph-link text-primary" />)}
+      {iconOnRight &&
+        (icon ?? <i className="ph ph-bold ph-link text-primary group-[.sidebar]:text-white" />)}
     </div>
   );
 };
@@ -207,7 +208,10 @@ const Section = <T,>({
                 </div>
 
                 {summary !== undefined && !isEmptyString(summary) && (
-                  <div dangerouslySetInnerHTML={{ __html: summary }} className="wysiwyg" />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: sanitize(summary) }}
+                    className="wysiwyg group-[.sidebar]:prose-invert"
+                  />
                 )}
 
                 {level !== undefined && level > 0 && <Rating level={level} />}
@@ -280,26 +284,13 @@ const Education = () => {
 
 const Profiles = () => {
   const section = useArtboardStore((state) => state.resume.sections.profiles);
-  const fontSize = useArtboardStore((state) => state.resume.metadata.typography.font.size);
 
   return (
     <Section<Profile> section={section}>
       {(item) => (
         <div>
           {isUrl(item.url.href) ? (
-            <Link
-              url={item.url}
-              label={item.username}
-              icon={
-                <img
-                  className="ph"
-                  width={fontSize}
-                  height={fontSize}
-                  alt={item.network}
-                  src={`https://cdn.simpleicons.org/${item.icon}`}
-                />
-              }
-            />
+            <Link url={item.url} label={item.username} icon={<BrandIcon slug={item.icon} />} />
           ) : (
             <p>{item.username}</p>
           )}
@@ -578,7 +569,12 @@ export const Chikorita = ({ columns, isFirstPage = false }: TemplateProps) => {
 
   return (
     <div className="grid min-h-[inherit] grid-cols-3">
-      <div className="main p-custom group col-span-2 space-y-4">
+      <div
+        className={cn(
+          "main p-custom group space-y-4",
+          sidebar.length > 0 ? "col-span-2" : "col-span-3",
+        )}
+      >
         {isFirstPage && <Header />}
 
         {main.map((section) => (
@@ -586,7 +582,12 @@ export const Chikorita = ({ columns, isFirstPage = false }: TemplateProps) => {
         ))}
       </div>
 
-      <div className="sidebar p-custom group h-full space-y-4 bg-primary text-background">
+      <div
+        className={cn(
+          "sidebar p-custom group h-full space-y-4 bg-primary text-background",
+          sidebar.length === 0 && "hidden",
+        )}
+      >
         {sidebar.map((section) => (
           <Fragment key={section}>{mapSectionToComponent(section)}</Fragment>
         ))}

@@ -1,10 +1,8 @@
-import {
+import type {
   Award,
   Certification,
   CustomSection,
   CustomSectionGroup,
-  Education,
-  Experience,
   Interest,
   Language,
   Profile,
@@ -15,15 +13,16 @@ import {
   SectionWithItem,
   Skill,
   URL,
-  Volunteer,
 } from "@reactive-resume/schema";
-import { cn, isEmptyString, isUrl, linearTransform } from "@reactive-resume/utils";
+import { Education, Experience, Volunteer } from "@reactive-resume/schema";
+import { cn, isEmptyString, isUrl, linearTransform, sanitize } from "@reactive-resume/utils";
 import get from "lodash.get";
 import React, { Fragment } from "react";
 
+import { BrandIcon } from "../components/brand-icon";
 import { Picture } from "../components/picture";
 import { useArtboardStore } from "../store/artboard";
-import { TemplateProps } from "../types/template";
+import type { TemplateProps } from "../types/template";
 
 const Header = () => {
   const basics = useArtboardStore((state) => state.resume.basics);
@@ -99,9 +98,9 @@ const Summary = () => {
         <div className="absolute left-[-4.5px] top-[8px] hidden size-[8px] rounded-full bg-primary group-[.main]:block" />
 
         <div
-          dangerouslySetInnerHTML={{ __html: section.content }}
-          className="wysiwyg"
+          dangerouslySetInnerHTML={{ __html: sanitize(section.content) }}
           style={{ columns: section.columns }}
+          className="wysiwyg"
         />
       </main>
     </section>
@@ -225,7 +224,10 @@ const Section = <T,>({
                 <div>{children?.(item as T)}</div>
 
                 {summary !== undefined && !isEmptyString(summary) && (
-                  <div dangerouslySetInnerHTML={{ __html: summary }} className="wysiwyg" />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: sanitize(summary) }}
+                    className="wysiwyg"
+                  />
                 )}
 
                 {level !== undefined && level > 0 && <Rating level={level} />}
@@ -247,26 +249,13 @@ const Section = <T,>({
 
 const Profiles = () => {
   const section = useArtboardStore((state) => state.resume.sections.profiles);
-  const fontSize = useArtboardStore((state) => state.resume.metadata.typography.font.size);
 
   return (
     <Section<Profile> section={section}>
       {(item) => (
         <div>
           {isUrl(item.url.href) ? (
-            <Link
-              url={item.url}
-              label={item.username}
-              icon={
-                <img
-                  className="ph"
-                  width={fontSize}
-                  height={fontSize}
-                  alt={item.network}
-                  src={`https://cdn.simpleicons.org/${item.icon}`}
-                />
-              }
-            />
+            <Link url={item.url} label={item.username} icon={<BrandIcon slug={item.icon} />} />
           ) : (
             <p>{item.username}</p>
           )}
@@ -574,7 +563,9 @@ export const Azurill = ({ columns, isFirstPage = false }: TemplateProps) => {
           ))}
         </div>
 
-        <div className="main group col-span-2 space-y-4">
+        <div
+          className={cn("main group space-y-4", sidebar.length > 0 ? "col-span-2" : "col-span-3")}
+        >
           {main.map((section) => (
             <Fragment key={section}>{mapSectionToComponent(section)}</Fragment>
           ))}
